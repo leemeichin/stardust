@@ -1,57 +1,48 @@
 const std = @import("std");
+const fs = std.fs;
+const ioctl = std.c.ioctl;
 
 const c = @cImport({
     @cDefine("_NO_CRT_STDIO_INLINE", "1");
-    @cInclude("i2c.h");
+    @cInclude("linux/i2c-dev.h");
+    @cInclude("i2c/smbus.h");
 });
 
 const SET_CONTRAST = 0x81;
-const SET_ENTIRE_ON = 0xA4;
-const SET_NORM_INV = 0xA6;
-const SET_DISP = 0xAE;
-const SET_MEM_ADDR = 0x20;
-const SET_COL_ADDR = 0x21;
-const SET_PAGE_ADDR = 0x22;
-const SET_DISP_START_LINE = 0x40;
-const SET_SEG_REMAP = 0xA0;
-const SET_MUX_RATIO = 0xA8;
-const SET_COM_OUT_DIR = 0xC0;
-const SET_DISP_OFFSET = 0xD3;
-const SET_COM_PIN_CFG = 0xDA;
-const SET_DISP_CLK_DIV = 0xD5;
+const DISPLAY_ALL_ON_RESUME = 0xA4;
+const DISPLAY_ALL_ON = 0xA5;
+const NORMAL_DISPLAY = 0xA6;
+const INVERT_DISPLAY = 0xA7;
+const DISPLAY_OFF = 0xAE;
+const DISPLAY_ON = 0xAF;
+const SET_DISPLAY_OFFSET = 0xD3;
+const SET_COM_PINS = 0xDA;
+const SET_VCOM_DETECT = 0xDB;
+const SET_DISPLAY_CLOCKDIV = 0xD5;
 const SET_PRECHARGE = 0xD9;
-const SET_VCOM_DESEL = 0xDB;
-const SET_CHARGE_PUMP = 0x8D;
+const SET_MULTIPLEX = 0xA8;
+const SET_LOW_COLUMN = 0x00;
+const SET_HIGH_COLUMN = 0x10;
+const SET_START_LINE = 0x40;
+const SET_START_PAGE = 0xB0;
+const MEMORY_MODE = 0x20;
+const COM_SCAN_INC = 0xC0;
+const COM_SCAN_DEC = 0xC8;
+const SEG_REMAP = 0xA0;
+const CHARGE_PUMP = 0x8D;
+const EXTERNAL_VCC = 0x1;
+const SWITCHCAP_VCC = 0x2;
 
-const Device = struct {
-    w: i8,
-    h: i8,
-    i2c: c.I2CDevice,
+const screen_width = 128;
+const screen_height = 32;
+const i2c_addr = 0x3c;
+const i2c_device = "/dev/i2c-1";
 
-    pub fn init(w: i8, h: i8, buf: [*]const u8) Device {
-        return Device{
-            .w = w,
-            .h = h,
-            .i2c = c.I2CDevice{
-                .bus = c.i2c_open(buf),
-                .addr = 0x3C,
-                .iaddr_bytes = 1,
-                .page_bytes = 16,
-            },
-        };
-    }
+// https://www.kernel.org/doc/Documentation/i2c/dev-interface
 
-    pub fn power_off(self: Device) void {
-        self.fill(0);
-        self.refresh();
+pub fn main() !void {
+    var fd = try fs.openFileAbsolute(i2c_device, fs.File.OpenFlags{ .write = true, .read = true });
+    defer fd.close();
 
-        c.i2c_close(self.i2c);
-    }
-
-    pub fn write(self: Device, cmd: i8) void {}
-};
-
-pub fn main() anyerror!void {
-    const d = Device.init(123, 48, "/dev/null");
-    std.debug.warn("All your codebase are belong to us.\n", .{});
+    return;
 }

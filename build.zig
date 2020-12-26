@@ -13,7 +13,6 @@ pub fn build(b: *Builder) void {
 
     const exe = b.addExecutable("pire", "src/main.zig");
     exe.linkSystemLibrary("c");
-    exe.addIncludeDir("./ext/libi2c/src");
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.install();
