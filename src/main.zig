@@ -6,7 +6,6 @@ const c = @cImport({
     @cInclude("linux/i2c.h");
     @cInclude("linux/i2c-dev.h");
     @cInclude("sys/ioctl.h");
-    //@cInclude("i2c/smbus.h");
 });
 
 const SET_CONTRAST = 0x81;
@@ -52,16 +51,16 @@ fn init_display(fd: fs.File) !void {
     };
 
     inline for (cmds) |cmd| {
-        _ = try fd.write(&[3]u8{ i2c_addr, 0x00, cmd });
+        _ = try fd.write(&[2]u8{ 0x00, cmd });
     }
 }
 
 fn display_off(fd: fs.File) !void {
-    _ = try fd.write(&[3]u8{ i2c_addr, 0x00, SET_DISPLAY_OFF });
+    _ = try fd.write(&[2]u8{ 0x00, SET_DISPLAY_OFF });
 }
 
 fn display_on(fd: fs.File) !void {
-    _ = try fd.write(&[3]u8{ i2c_addr, 0x00, SET_DISPLAY_ON });
+    _ = try fd.write(&[2]u8{ 0x00, SET_DISPLAY_ON });
 }
 
 fn reset_cursor(fd: fs.File) !void {
@@ -75,7 +74,7 @@ fn reset_cursor(fd: fs.File) !void {
     };
 
     inline for (cmds) |cmd| {
-        _ = try fd.write(&[3]u8{ i2c_addr, 0x00, cmd });
+        _ = try fd.write(&[2]u8{ 0x00, cmd });
     }
 }
 
@@ -83,21 +82,21 @@ fn fill(fd: fs.File) !void {
     var i: usize = 0;
 
     while (i < 1024) {
-        _ = try fd.write(&[3]u8{ i2c_addr, 0x40, 0xff });
+        _ = try fd.write(&[2]u8{ 0x40, 0xFF });
         i += 1;
     }
 }
 
-// zig build-exe src/main.zig -target arm-linux-gnueabi -mcpu arm1176jzf_s --release-fast
+// zig build-exe src/main.zig -target arm-linux-musleabi -mcpu arm1176jzf_s -O ReleaseSafe -lc
 pub fn main() !void {
     const stdout = std.io.getStdOut().outStream();
     const fd = try fs.openFileAbsolute(i2c_device, fs.File.OpenFlags{ .write = true, .read = true });
     defer fd.close();
 
-    // if (c.ioctl(fd.handle, c.I2C_SLAVE, i2c_addr) < 0) {
-    //     try stdout.print("ioctlfail\n", .{});
-    //     return;
-    // }
+    if (c.ioctl(fd.handle, c.I2C_SLAVE, i2c_addr) < 0) {
+        try stdout.print("ioctlfail\n", .{});
+        return;
+    }
 
     try stdout.print("init\n", .{});
     try display_off(fd);
